@@ -9,6 +9,7 @@ import kotlinx.html.stream.createHTML
 import kotlinx.html.unsafe
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import saketh.linkora.localization.DefaultJSONConfig
 import saketh.linkora.localization.availableLanguages
 import saketh.linkora.localization.domain.repository.LocalizationRepo
 import sakethh.kapsule.*
@@ -22,7 +23,7 @@ fun Application.configureRouting(localizationRepo: LocalizationRepo) {
 
         get("/info") {
             call.respond(
-                Json.encodeToString(
+                DefaultJSONConfig.encodeToString(
                     localizationRepo.getLocalizedInfo()
                 )
             )

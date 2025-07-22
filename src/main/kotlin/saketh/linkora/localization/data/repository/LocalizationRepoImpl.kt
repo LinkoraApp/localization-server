@@ -6,12 +6,12 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.serialization.json.Json
 import saketh.linkora.localization.availableLanguages
+import saketh.linkora.localization.DefaultJSONConfig
 import saketh.linkora.localization.domain.model.info.AvailableLanguageDTO
 import saketh.linkora.localization.domain.model.info.LocalizedInfoDTO
 import saketh.linkora.localization.domain.repository.LocalizationRepo
 
 class LocalizationRepoImpl : LocalizationRepo {
-    val json = Json { isLenient = true }
 
     private fun retrieveRawFileString(languageCode: String): String {
         return this::class.java.getResource("/raw/$languageCode.json").readText()
@@ -25,7 +25,7 @@ class LocalizationRepoImpl : LocalizationRepo {
         return LocalizedInfoDTO(
             availableLanguages = availableLanguages.map {
                 val currentLanguageCode = it.substringBefore(".").trim()
-                val localizedStringsCount = Json.decodeFromString<Map<String, String>>(
+                val localizedStringsCount = DefaultJSONConfig.decodeFromString<Map<String, String>>(
                     string = getTranslationsFor(currentLanguageCode)
                 ).filter {
                     it.value.isNotBlank()
@@ -51,7 +51,7 @@ class LocalizationRepoImpl : LocalizationRepo {
                         if (this[this.lastIndex] == ')') this.substring(0, this.lastIndex) else this
                     }
                 }.associate {
-                    it.substringBefore("(") to json.decodeFromString<String>(
+                    it.substringBefore("(") to DefaultJSONConfig.decodeFromString<String>(
                         it.substringAfter("(").substringAfter("defaultValue").substringAfter("=").trim()
                             .replace("\\'", "'")
                     ).replace("\${LinkoraPlaceHolder.First.value}", "{#LINKORA_PLACE_HOLDER_1#}")
@@ -65,7 +65,7 @@ class LocalizationRepoImpl : LocalizationRepo {
             try {
                 httpClient.get("https://raw.githubusercontent.com/LinkoraApp/localization-server/master/src/main/resources/raw/$languageCode.json")
                     .bodyAsText().run {
-                        Result.success(Json.decodeFromString(this.substringAfter("---").trim()))
+                        Result.success(DefaultJSONConfig.decodeFromString(this.substringAfter("---").trim()))
                     }
             } catch (e: Exception) {
                 Result.failure(e)
