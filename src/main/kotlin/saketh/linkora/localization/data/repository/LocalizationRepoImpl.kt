@@ -65,7 +65,7 @@ class LocalizationRepoImpl : LocalizationRepo {
             try {
                 httpClient.get("https://raw.githubusercontent.com/LinkoraApp/localization-server/master/src/main/resources/raw/$languageCode.json")
                     .bodyAsText().run {
-                        Result.success(Json.decodeFromString(this))
+                        Result.success(Json.decodeFromString(this.substringAfter("---").trim()))
                     }
             } catch (e: Exception) {
                 Result.failure(e)
