@@ -18,7 +18,7 @@ application {
 }
 ktor {
     fatJar {
-        archiveFileName.set("app.jar")
+        archiveFileName.set("localizationServer.jar")
     }
 }
 repositories {
