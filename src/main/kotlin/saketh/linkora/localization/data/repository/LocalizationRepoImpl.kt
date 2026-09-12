@@ -1,16 +1,17 @@
 package saketh.linkora.localization.data.repository
 
 import io.ktor.client.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import kotlinx.serialization.Serializable
 import saketh.linkora.localization.DefaultJSONConfig
 import saketh.linkora.localization.availableLanguages
+import saketh.linkora.localization.data.repository.LocalizationRepoImpl.LocalizedItem
 import saketh.linkora.localization.domain.model.info.AvailableLanguageDTO
 import saketh.linkora.localization.domain.model.info.LocalizedInfoDTO
 import saketh.linkora.localization.domain.repository.LocalizationRepo
 
-class LocalizationRepoImpl : LocalizationRepo {
+class LocalizationRepoImpl(private val httpClient: HttpClient) : LocalizationRepo {
 
     private fun retrieveRawFileString(languageCode: String): String {
         return this::class.java.getResource("/raw/$languageCode.json").readText()
@@ -39,25 +40,26 @@ class LocalizationRepoImpl : LocalizationRepo {
         )
     }
 
+    @Serializable
+    data class LocalizedItem(val key: String, val defaultValue: String)
+
     override suspend fun getLatestKeysWithDefaultValues(): Map<String, String> {
-        return HttpClient(CIO).use { httpClient ->
-            DefaultJSONConfig.decodeFromString(
-                httpClient.get("https://raw.githubusercontent.com/LinkoraApp/Linkora/master/locales/default_en.json")
-                    .bodyAsText()
-            )
-        }
+        return httpClient.get("https://raw.githubusercontent.com/LinkoraApp/Linkora/master/locales/default.json")
+            .bodyAsText().run {
+                DefaultJSONConfig.decodeFromString<List<LocalizedItem>>(this)
+            }.associate {
+                it.key to it.defaultValue
+            }
     }
 
     override suspend fun getLatestKeyValuePairsForALanguage(languageCode: String): Result<Map<String, String>> {
-        return HttpClient(CIO).use { httpClient ->
-            try {
-                httpClient.get("https://raw.githubusercontent.com/LinkoraApp/localization-server/master/src/main/resources/raw/$languageCode.json")
-                    .bodyAsText().run {
-                        Result.success(DefaultJSONConfig.decodeFromString(this.substringAfter("---").trim()))
-                    }
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+        return try {
+            httpClient.get("https://raw.githubusercontent.com/LinkoraApp/localization-server/master/src/main/resources/raw/$languageCode.json")
+                .bodyAsText().run {
+                    Result.success(DefaultJSONConfig.decodeFromString(this.substringAfter("---").trim()))
+                }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

@@ -1,5 +1,7 @@
 package saketh.linkora.localization
 
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -33,6 +35,6 @@ fun Application.module() {
     install(CORS) {
         anyHost()
     }
-    val localizationRepo: LocalizationRepo = LocalizationRepoImpl()
+    val localizationRepo: LocalizationRepo = LocalizationRepoImpl(httpClient = HttpClient(CIO))
     configureRouting(localizationRepo)
 }
